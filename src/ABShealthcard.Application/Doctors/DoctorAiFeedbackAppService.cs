@@ -7,7 +7,7 @@ using Volo.Abp.Users;
 
 namespace ABShealthcard.Doctors;
 
-public class DoctorAiFeedbackAppService : ApplicationService
+public class DoctorAiFeedbackAppService : ApplicationService, IDoctorAiFeedbackAppService
 {
     private readonly IRepository<DoctorAiFeedback, Guid> _repo;
 

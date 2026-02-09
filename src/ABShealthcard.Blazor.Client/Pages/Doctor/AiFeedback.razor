@@ -1,6 +1,42 @@
 @using ABShealthcard.Doctors
 @using Microsoft.AspNetCore.Components
-@inject DoctorAiFeedbackAppService FeedbackService
+@inject IDoctorAiFeedbackAppService FeedbackService
+
+<div class="form-check form-switch mb-3">
+    <input class="form-check-input" type="checkbox" id="showAiPreviewToggle" @bind="showAiPreview" />
+    <label class="form-check-label" for="showAiPreviewToggle">
+        Show AI Preview by default
+        <span title="AI explains existing data only. It does not diagnose or decide.">
+            ℹ️
+        </span>
+    </label>
+</div>
+
+@if (showAiPreview)
+{
+    <div class="alert alert-info mb-2">
+        <strong>AI Explanation (Preview Mode)</strong><br />
+        <small>
+            This is an assistive explanation only.
+            Final clinical judgment remains with the doctor.
+        </small>
+    </div>
+
+    @if (!dismissed)
+    {
+        <button class="btn btn-sm btn-outline-secondary mb-2" @onclick="() => dismissed = true">
+            Dismiss AI for this visit
+        </button>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <p class="text-muted mb-0">
+                    AI narrative preview appears here once the system generates it.
+                </p>
+            </div>
+        </div>
+    }
+}
 
 <h4>AI Summary Feedback</h4>
 
@@ -22,6 +58,8 @@
 
     bool showComment;
     string comment = string.Empty;
+    bool showAiPreview = true;
+    bool dismissed;
 
     async Task Submit(bool helpful)
     {
