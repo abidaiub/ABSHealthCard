@@ -1,0 +1,49 @@
+@page "/patient/dashboard"
+@using ABShealthcard.Patients
+@using ABShealthcard.Permissions
+@inherits ABShealthcardComponentBase
+@attribute [Authorize(ABShealthcardPermissions.Patient.ProfileView)]
+
+<PageTitle>@L["Patient:Dashboard:Title"]</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>@L["Patient:Dashboard:Title"]</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Patient:Dashboard:Profile"]</h5>
+                    <p class="card-text">@L["Patient:Dashboard:ProfileDescription"]</p>
+                    <a href="/patient/profile" class="btn btn-primary">@L["Patient:Dashboard:ViewProfile"]</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Patient:Dashboard:History"]</h5>
+                    <p class="card-text">@L["Patient:Dashboard:HistoryDescription"]</p>
+                    <a href="/patient/history" class="btn btn-primary">@L["Patient:Dashboard:ViewHistory"]</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@L["Patient:Dashboard:Medications"]</h5>
+                    <p class="card-text">@L["Patient:Dashboard:MedicationsDescription"]</p>
+                    <a href="/patient/medications" class="btn btn-primary">@L["Patient:Dashboard:ViewMedications"]</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

@@ -1,0 +1,220 @@
+@page "/patient/medications"
+@using ABShealthcard.Patients
+@using ABShealthcard.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inherits ABShealthcardComponentBase
+@attribute [Authorize(ABShealthcardPermissions.Patient.MedicationsManage)]
+@inject IPatientMedicationAppService PatientMedicationAppService
+@inject Volo.Abp.AspNetCore.Components.Messages.UI.MessageService Message
+
+<PageTitle>@L["Patient:Medications:Title"]</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h2>@L["Patient:Medications:Title"]</h2>
+            <button class="btn btn-primary" @onclick="ShowCreateModal">@L["Create"]</button>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@L["Loading"]</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>@L["Patient:Medications:MedicineName"]</th>
+                            <th>@L["Patient:Medications:Dose"]</th>
+                            <th>@L["Patient:Medications:Frequency"]</th>
+                            <th>@L["Patient:Medications:StartDate"]</th>
+                            <th>@L["Patient:Medications:EndDate"]</th>
+                            <th>@L["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var medication in Medications)
+                        {
+                            <tr>
+                                <td>@medication.MedicineName</td>
+                                <td>@medication.Dose</td>
+                                <td>@medication.Frequency</td>
+                                <td>@medication.StartDate?.ToString("yyyy-MM-dd")</td>
+                                <td>@medication.EndDate?.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" @onclick="() => ShowEditModal(medication)">@L["Edit"]</button>
+                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteMedication(medication.Id)">@L["Delete"]</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (ShowModal)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(EditingId == null ? L["Create"] : L["Edit"])</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@EditingItem" OnValidSubmit="@HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">@L["Patient:Medications:MedicineName"] *</label>
+                            <InputText @bind-Value="@EditingItem.MedicineName" class="form-control" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">@L["Patient:Medications:Dose"]</label>
+                                <InputText @bind-Value="@EditingItem.Dose" class="form-control" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">@L["Patient:Medications:Frequency"]</label>
+                                <InputText @bind-Value="@EditingItem.Frequency" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">@L["Patient:Medications:StartDate"]</label>
+                                <InputDate @bind-Value="@EditingItem.StartDate" class="form-control" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">@L["Patient:Medications:EndDate"]</label>
+                                <InputDate @bind-Value="@EditingItem.EndDate" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">@L["Patient:Medications:Notes"]</label>
+                            <InputTextArea @bind-Value="@EditingItem.Notes" class="form-control" rows="3" />
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">@L["Cancel"]</button>
+                            <button type="submit" class="btn btn-primary">@L["Save"]</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<PatientMedicationDto> Medications { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+    private bool ShowModal { get; set; } = false;
+    private CreateUpdatePatientMedicationDto EditingItem { get; set; } = new();
+    private Guid? EditingId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMedications();
+    }
+
+    private async Task LoadMedications()
+    {
+        try
+        {
+            IsLoading = true;
+            Medications = await PatientMedicationAppService.GetListAsync();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        EditingItem = new CreateUpdatePatientMedicationDto();
+        EditingId = null;
+        ShowModal = true;
+    }
+
+    private void ShowEditModal(PatientMedicationDto medication)
+    {
+        EditingItem = new CreateUpdatePatientMedicationDto
+        {
+            MedicineName = medication.MedicineName,
+            Dose = medication.Dose,
+            Frequency = medication.Frequency,
+            StartDate = medication.StartDate,
+            EndDate = medication.EndDate,
+            Notes = medication.Notes
+        };
+        EditingId = medication.Id;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        EditingItem = new CreateUpdatePatientMedicationDto();
+        EditingId = null;
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (EditingId.HasValue)
+            {
+                await PatientMedicationAppService.UpdateAsync(EditingId.Value, EditingItem);
+                await Message.Success(L["SuccessfullyUpdated"]);
+            }
+            else
+            {
+                await PatientMedicationAppService.CreateAsync(EditingItem);
+                await Message.Success(L["SuccessfullyCreated"]);
+            }
+            CloseModal();
+            await LoadMedications();
+        }
+        catch (Exception ex)
+        {
+            await Message.Error(ex.Message);
+        }
+    }
+
+    private async Task DeleteMedication(Guid id)
+    {
+        if (!await Message.Confirm(L["DeleteConfirmationMessage"]))
+        {
+            return;
+        }
+
+        try
+        {
+            await PatientMedicationAppService.DeleteAsync(id);
+            await Message.Success(L["SuccessfullyDeleted"]);
+            await LoadMedications();
+        }
+        catch (Exception ex)
+        {
+            await Message.Error(ex.Message);
+        }
+    }
+}
+
+

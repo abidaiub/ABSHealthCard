@@ -1,0 +1,6 @@
+﻿namespace ABShealthcard;
+
+public static class ABShealthcardDomainErrorCodes
+{
+    /* You can add your business exception error codes here, as constants */
+}

@@ -1,0 +1,279 @@
+@page "/patient/history"
+@using System.Collections.Generic
+@using System.Linq
+@using ABShealthcard.Patients
+@using ABShealthcard.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inherits ABShealthcardComponentBase
+@attribute [Authorize(ABShealthcardPermissions.Patient.HistoryManage)]
+@inject IPatientHistoryAppService PatientHistoryAppService
+@inject Volo.Abp.AspNetCore.Components.Messages.UI.MessageService Message
+
+<PageTitle>@L["Patient:History:Title"]</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h2>@L["Patient:History:Title"]</h2>
+            <button class="btn btn-primary" @onclick="ShowCreateModal">@L["Create"]</button>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">@L["Patient:History:FilterByType"]</label>
+            <select class="form-select" @bind="SelectedType" @onchange="LoadHistory">
+                <option value="">@L["All"]</option>
+                <option value="@HistoryType.Condition">@L["Patient:History:Type:Condition"]</option>
+                <option value="@HistoryType.Allergy">@L["Patient:History:Type:Allergy"]</option>
+                <option value="@HistoryType.Surgery">@L["Patient:History:Type:Surgery"]</option>
+                <option value="@HistoryType.Vaccine">@L["Patient:History:Type:Vaccine"]</option>
+            </select>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@L["Loading"]</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>@L["Patient:History:Type"]</th>
+                            <th>@L["Patient:History:ItemTitle"]</th>
+                            <th>@L["Patient:History:StartDate"]</th>
+                            <th>@L["Patient:History:EndDate"]</th>
+                            <th>@L["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in HistoryItems)
+                        {
+                            <tr>
+                                <td>@GetTypeName(item.Type)</td>
+                                <td>@item.Title</td>
+                                <td>@item.StartDate?.ToString("yyyy-MM-dd")</td>
+                                <td>@item.EndDate?.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" @onclick="() => ShowEditModal(item)">@L["Edit"]</button>
+                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteItem(item.Id)">@L["Delete"]</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                @if (TotalCount > 0)
+                {
+                    <nav>
+                        <ul class="pagination">
+                            <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                                <a class="page-link" @onclick="() => ChangePage(CurrentPage - 1)">@L["Previous"]</a>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">@L["Page"] @CurrentPage / @TotalPages</span>
+                            </li>
+                            <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
+                                <a class="page-link" @onclick="() => ChangePage(CurrentPage + 1)">@L["Next"]</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@if (ShowModal)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(EditingItem?.Id == null ? L["Create"] : L["Edit"])</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@EditingItem" OnValidSubmit="@HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">@L["Patient:History:Type"] *</label>
+                            <InputSelect @bind-Value="@EditingItem.Type" class="form-select">
+                                <option value="@HistoryType.Condition">@L["Patient:History:Type:Condition"]</option>
+                                <option value="@HistoryType.Allergy">@L["Patient:History:Type:Allergy"]</option>
+                                <option value="@HistoryType.Surgery">@L["Patient:History:Type:Surgery"]</option>
+                                <option value="@HistoryType.Vaccine">@L["Patient:History:Type:Vaccine"]</option>
+                            </InputSelect>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">@L["Patient:History:ItemTitle"] *</label>
+                            <InputText @bind-Value="@EditingItem.Title" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">@L["Patient:History:Details"]</label>
+                            <InputTextArea @bind-Value="@EditingItem.Details" class="form-control" rows="3" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">@L["Patient:History:StartDate"]</label>
+                                <InputDate @bind-Value="@EditingItem.StartDate" class="form-control" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">@L["Patient:History:EndDate"]</label>
+                                <InputDate @bind-Value="@EditingItem.EndDate" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">@L["Cancel"]</button>
+                            <button type="submit" class="btn btn-primary">@L["Save"]</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<PatientHistoryItemDto> HistoryItems { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+    private bool ShowModal { get; set; } = false;
+    private CreateUpdatePatientHistoryItemDto EditingItem { get; set; } = new();
+    private Guid? EditingId { get; set; }
+    private HistoryType? SelectedType { get; set; }
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private long TotalCount { get; set; }
+    private int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHistory();
+    }
+
+    private async Task LoadHistory()
+    {
+        try
+        {
+            IsLoading = true;
+            var filter = new PatientHistoryItemFilterDto
+            {
+                Type = SelectedType,
+                SkipCount = (CurrentPage - 1) * PageSize,
+                MaxResultCount = PageSize
+            };
+            var result = await PatientHistoryAppService.GetListAsync(filter);
+            HistoryItems = result.Items.ToList();
+            TotalCount = result.TotalCount;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        EditingItem = new CreateUpdatePatientHistoryItemDto();
+        EditingId = null;
+        ShowModal = true;
+    }
+
+    private void ShowEditModal(PatientHistoryItemDto item)
+    {
+        EditingItem = new CreateUpdatePatientHistoryItemDto
+        {
+            Type = item.Type,
+            Title = item.Title,
+            Details = item.Details,
+            StartDate = item.StartDate,
+            EndDate = item.EndDate
+        };
+        EditingId = item.Id;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        EditingItem = new CreateUpdatePatientHistoryItemDto();
+        EditingId = null;
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (EditingId.HasValue)
+            {
+                await PatientHistoryAppService.UpdateAsync(EditingId.Value, EditingItem);
+                await Message.Success(L["SuccessfullyUpdated"]);
+            }
+            else
+            {
+                await PatientHistoryAppService.CreateAsync(EditingItem);
+                await Message.Success(L["SuccessfullyCreated"]);
+            }
+            CloseModal();
+            await LoadHistory();
+        }
+        catch (Exception ex)
+        {
+            await Message.Error(ex.Message);
+        }
+    }
+
+    private async Task DeleteItem(Guid id)
+    {
+        if (!await Message.Confirm(L["DeleteConfirmationMessage"]))
+        {
+            return;
+        }
+
+        try
+        {
+            await PatientHistoryAppService.DeleteAsync(id);
+            await Message.Success(L["SuccessfullyDeleted"]);
+            await LoadHistory();
+        }
+        catch (Exception ex)
+        {
+            await Message.Error(ex.Message);
+        }
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || page > TotalPages) return;
+        CurrentPage = page;
+        await LoadHistory();
+    }
+
+    private string GetTypeName(HistoryType type)
+    {
+        return type switch
+        {
+            HistoryType.Condition => L["Patient:History:Type:Condition"],
+            HistoryType.Allergy => L["Patient:History:Type:Allergy"],
+            HistoryType.Surgery => L["Patient:History:Type:Surgery"],
+            HistoryType.Vaccine => L["Patient:History:Type:Vaccine"],
+            _ => type.ToString()
+        };
+    }
+}
+

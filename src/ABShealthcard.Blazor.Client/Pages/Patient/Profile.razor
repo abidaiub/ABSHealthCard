@@ -1,0 +1,232 @@
+@page "/patient/profile"
+@using ABShealthcard.Patients
+@using ABShealthcard.Permissions
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@inherits ABShealthcardComponentBase
+@attribute [Authorize(ABShealthcardPermissions.Patient.ProfileView)]
+@inject IPatientProfileAppService PatientProfileAppService
+@inject Volo.Abp.AspNetCore.Components.Messages.UI.MessageService Message
+
+<PageTitle>@L["Patient:Profile:Title"]</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>@L["Patient:Profile:Title"]</h2>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@L["Loading"]</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="@ProfileDto" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@L["Patient:Profile:PersonalInformation"]</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:FullNameEn"] *</label>
+                            <InputText @bind-Value="@ProfileDto.FullNameEn" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:FullNameBn"]</label>
+                            <InputText @bind-Value="@ProfileDto.FullNameBn" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:FatherNameEn"]</label>
+                            <InputText @bind-Value="@ProfileDto.FatherNameEn" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:FatherNameBn"]</label>
+                            <InputText @bind-Value="@ProfileDto.FatherNameBn" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:MotherNameEn"]</label>
+                            <InputText @bind-Value="@ProfileDto.MotherNameEn" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:MotherNameBn"]</label>
+                            <InputText @bind-Value="@ProfileDto.MotherNameBn" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">@L["Patient:Profile:DateOfBirth"]</label>
+                            <InputDate @bind-Value="@ProfileDto.DateOfBirth" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">@L["Patient:Profile:Gender"]</label>
+                            <InputSelect @bind-Value="@ProfileDto.Gender" class="form-select">
+                                <option value="@Gender.Unknown">@L["Patient:Profile:Gender:Unknown"]</option>
+                                <option value="@Gender.Male">@L["Patient:Profile:Gender:Male"]</option>
+                                <option value="@Gender.Female">@L["Patient:Profile:Gender:Female"]</option>
+                                <option value="@Gender.Other">@L["Patient:Profile:Gender:Other"]</option>
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">@L["Patient:Profile:BloodGroup"]</label>
+                            <InputSelect @bind-Value="@ProfileDto.BloodGroup" class="form-select">
+                                <option value="@BloodGroup.Unknown">@L["NotSpecified"]</option>
+                                <option value="@BloodGroup.APositive">@L["Patient:Profile:BloodGroup:A+"]</option>
+                                <option value="@BloodGroup.ANegative">@L["Patient:Profile:BloodGroup:A-"]</option>
+                                <option value="@BloodGroup.BPositive">@L["Patient:Profile:BloodGroup:B+"]</option>
+                                <option value="@BloodGroup.BNegative">@L["Patient:Profile:BloodGroup:B-"]</option>
+                                <option value="@BloodGroup.ABPositive">@L["Patient:Profile:BloodGroup:AB+"]</option>
+                                <option value="@BloodGroup.ABNegative">@L["Patient:Profile:BloodGroup:AB-"]</option>
+                                <option value="@BloodGroup.OPositive">@L["Patient:Profile:BloodGroup:O+"]</option>
+                                <option value="@BloodGroup.ONegative">@L["Patient:Profile:BloodGroup:O-"]</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:HeightCm"]</label>
+                            <InputNumber @bind-Value="@ProfileDto.HeightCm" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:WeightKg"]</label>
+                            <InputNumber @bind-Value="@ProfileDto.WeightKg" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@L["Patient:Profile:Identification"]</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:NidNo"]</label>
+                            <InputText @bind-Value="@ProfileDto.NidNo" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:BirthCertificateNo"]</label>
+                            <InputText @bind-Value="@ProfileDto.BirthCertificateNo" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@L["Patient:Profile:EmergencyContact"]</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:EmergencyContactName"] *</label>
+                            <InputText @bind-Value="@ProfileDto.EmergencyContactName" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:EmergencyContactPhone"] *</label>
+                            <InputText @bind-Value="@ProfileDto.EmergencyContactPhone" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@L["Patient:Profile:Address"]</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:AddressEn"]</label>
+                            <InputTextArea @bind-Value="@ProfileDto.AddressEn" class="form-control" rows="3" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">@L["Patient:Profile:AddressBn"]</label>
+                            <InputTextArea @bind-Value="@ProfileDto.AddressBn" class="form-control" rows="3" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <Authorize Permission="@ABShealthcardPermissions.Patient.ProfileEdit">
+                    <button type="submit" class="btn btn-primary">@L["Save"]</button>
+                </Authorize>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private PatientProfileDto ProfileDto { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfile();
+    }
+
+    private async Task LoadProfile()
+    {
+        try
+        {
+            IsLoading = true;
+            ProfileDto = await PatientProfileAppService.GetAsync();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            ProfileDto = await PatientProfileAppService.UpdateAsync(new CreateUpdatePatientProfileDto
+            {
+                FullNameEn = ProfileDto.FullNameEn,
+                FullNameBn = ProfileDto.FullNameBn,
+                FatherNameEn = ProfileDto.FatherNameEn,
+                FatherNameBn = ProfileDto.FatherNameBn,
+                MotherNameEn = ProfileDto.MotherNameEn,
+                MotherNameBn = ProfileDto.MotherNameBn,
+                DateOfBirth = ProfileDto.DateOfBirth,
+                Gender = ProfileDto.Gender,
+                BloodGroup = ProfileDto.BloodGroup,
+                HeightCm = ProfileDto.HeightCm,
+                WeightKg = ProfileDto.WeightKg,
+                NidNo = ProfileDto.NidNo,
+                BirthCertificateNo = ProfileDto.BirthCertificateNo,
+                EmergencyContactName = ProfileDto.EmergencyContactName,
+                EmergencyContactPhone = ProfileDto.EmergencyContactPhone,
+                AddressEn = ProfileDto.AddressEn,
+                AddressBn = ProfileDto.AddressBn
+            });
+            await Message.Success(L["SuccessfullySaved"]);
+        }
+        catch (Exception ex)
+        {
+            await Message.Error(ex.Message);
+        }
+    }
+}
+
