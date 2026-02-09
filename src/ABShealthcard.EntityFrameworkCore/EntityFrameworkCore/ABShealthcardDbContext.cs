@@ -1,3 +1,4 @@
+using ABShealthcard.AI;
 using ABShealthcard.Labs;
 using ABShealthcard.Patients;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,8 @@ public class ABShealthcardDbContext :
     public DbSet<LabTestParameter> LabTestParameters { get; set; }
     public DbSet<PatientLabReport> PatientLabReports { get; set; }
     public DbSet<PatientLabResult> PatientLabResults { get; set; }
+    public DbSet<DoctorAiFeedback> DoctorAiFeedbacks { get; set; }
+    public DbSet<AiUsageLog> AiUsageLogs { get; set; }
 
     #region Entities from the modules
 
